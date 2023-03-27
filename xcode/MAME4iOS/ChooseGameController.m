@@ -230,13 +230,20 @@ typedef NS_ENUM(NSInteger, LayoutMode) {
         [UIImage systemImageNamed:@"rectangle.stack.fill"    withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:height]] ?: @"▢",
         [UIImage systemImageNamed:@"rectangle.grid.1x2.fill" withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:height]] ?: @"☰"
     ]];
-    
+    seg1.accessibilityLabel = @"View Options";
+    [seg1 imageForSegmentAtIndex:LayoutTiny].accessibilityLabel = @"Tiny";
+    [seg1 imageForSegmentAtIndex:LayoutSmall].accessibilityLabel = @"Small";
+    [seg1 imageForSegmentAtIndex:LayoutLarge].accessibilityLabel = @"Large";
+    [seg1 imageForSegmentAtIndex:LayoutList].accessibilityLabel = @"List";
+    NSParameterAssert(LayoutCount == 4);
+
     seg1.selectedSegmentIndex = _layoutMode;
     [seg1 addTarget:self action:@selector(viewChange:) forControlEvents:UIControlEventValueChanged];
     UIBarButtonItem* layout = [[UIBarButtonItem alloc] initWithCustomView:seg1];
 
     // group/scope
     UISegmentedControl* seg2 = [[PopupSegmentedControl alloc] initWithItems:ALL_SCOPES];
+    seg2.accessibilityLabel = @"Group Options";
     seg2.selectedSegmentIndex = [ALL_SCOPES indexOfObject:_gameFilterScope];
     seg2.apportionsSegmentWidthsByContent = TARGET_OS_IOS ? NO : YES;
     seg2.autoresizingMask = UIViewAutoresizingFlexibleHeight;   // make vertical menu always.
@@ -2015,15 +2022,23 @@ NSAttributedString* attributedString(NSString* text, UIFont* font, UIColor* colo
         }]
     ];
     
-    if ([self isRecent:game]) {
-        actions = [actions arrayByAddingObjectsFromArray:@[
+    if (is_fav && indexPath.row != 0 && [self->_gameSectionTitles[indexPath.section] isEqualToString:FAVORITE_GAMES_TITLE]) {
+        actions = [actions  arrayByAddingObject:
+            [UIAlertAction actionWithTitle:@"Make First Favorite" symbol:@"1.circle" style:UIAlertActionStyleDefault handler:^(id action) {
+                [self setFavorite:game isFavorite:YES];
+                [self filterGameList];
+            }]
+        ];
+    }
+    
+    if ([self isRecent:game] && [self->_gameSectionTitles[indexPath.section] isEqualToString:RECENT_GAMES_TITLE]) {
+        actions = [actions arrayByAddingObject:
             [UIAlertAction actionWithTitle:@"Remove from Recently Played" symbol:@"minus.circle" style:UIAlertActionStyleDefault handler:^(id action) {
-                if ([self->_gameSectionTitles[indexPath.section] isEqualToString:RECENT_GAMES_TITLE])
-                    [self moveSelectionForDelete:indexPath];
+                [self moveSelectionForDelete:indexPath];
                 [self setRecent:game isRecent:NO];
                 [self filterGameList];
             }]
-        ]];
+        ];
     }
     
     actions = [actions arrayByAddingObjectsFromArray:@[
